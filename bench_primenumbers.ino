@@ -1,7 +1,10 @@
 /*
  * Forked from : https://github.com/RalphBacon/LGT8F328P-Arduino-Clone-Chip-ATMega328P
  * 
- * Prime number benchmark compatible with standard Arduino boards and with LGT8Fx MCU boards
+ * Prime number benchmark sketch compatible with :
+ *  - ATmega32x Arduino boards
+ *  - LGT8Fx boards
+ *  - STM32 boards
  * 
  * Calculate 10,000 prime numbers :
  * 
@@ -10,15 +13,19 @@
  *  ATmega32u4 @ 16MHz : 120 seconds (Leonardo made in Italy)
  *  ATmega32u4 @ 16MHz : 120 seconds (Leonardo Micro made in China)
  *  ATmega328p @  8MHz : 242 seconds (Mini pro 3.3V made in China)
+ *  
  *  LGT8F328p  @ 16MHz : 118 seconds using default Arduino Nano stuff (old bootloader)
  *  LGT8F328p  @ 16MHz : 118 seconds using Larduino_HSP
  *  LGT8F328p  @ 32MHz :  59 seconds using Larduino_HSP
  *  
+ *  STM32F103  @ 72MHz :   3 seconds using Arduino_Core_STM32 ("Blue Pill" made in China)
+ *  
  */
 
+#ifdef _AVR_COMMON_H
 // Must include this to be able change the prescaler frequency
 #include <avr/power.h> 
-
+#endif
 
 long start       = 0;
 long max_primes = 10000;
@@ -31,20 +38,22 @@ long lastfound = found;
 
 void setup() {
   
-  byte default_clkpr = CLKPR;
-  
-  #ifdef __LGT8F__ // <-- if using Larduino_HSP
-    bool lgt8f_detected = true;
-  #else
-    bool lgt8f_detected = CLKPR == 3; // <-- LGFP32 MiniEVB runs at 4MHz if using default Arduino Nano config
+  #ifdef _AVR_COMMON_H
+    byte default_clkpr = CLKPR;
+    
+    #ifdef __LGT8F__ // <-- if using Larduino_HSP
+      bool lgt8f_detected = true;
+    #else
+      bool lgt8f_detected = CLKPR == 3; // <-- LGFP32 MiniEVB runs at 4MHz if using default Arduino Nano config
+    #endif
+       
+    if ( lgt8f_detected ) {
+      // the MCU Frequency is described in ~\Arduino Sketches\hardware\LGT\avr\boards.txt
+      // on this line: lardu_328x.build.f_cpu=32000000L
+    
+      clock_prescale_set( F_CPU == 32000000 ? clock_div_1 : clock_div_2 );
+    }
   #endif
-    
-  if ( lgt8f_detected ) {
-    // the MCU Frequency is described in ~\Arduino Sketches\hardware\LGT\avr\boards.txt
-    // on this line: lardu_328x.build.f_cpu=32000000L
-    
-    clock_prescale_set( F_CPU == 32000000 ? clock_div_1 : clock_div_2 );
-  }
 
   // Wait for serial to initialise
   Serial.begin(9600);
@@ -54,14 +63,16 @@ void setup() {
   pinMode(5, OUTPUT); // init beeper pin
   beep(2); // In case the serial output is corrupt let's beep the start
 
-  if ( lgt8f_detected ) {
-    Serial.print("LGT8Fx detected");
-  }
   Serial.print("F_CPU value: "); Serial.println(F_CPU);
   Serial.print("Clock cycles per µsecond: "); Serial.println(clockCyclesPerMicrosecond());
-  
-  Serial.print("CLKPR : "); Serial.print( default_clkpr ); Serial.print(" -> "); Serial.println( CLKPR );
 
+  #ifdef _AVR_COMMON_H
+    if ( lgt8f_detected ) {
+      Serial.print("LGT8Fx detected");
+    }
+    Serial.print("CLKPR : "); Serial.print( default_clkpr ); Serial.print(" -> "); Serial.println( CLKPR );
+  #endif
+  
   #ifdef GUID0
     uint32_t guid = *(uint32_t*)&GUID0 ;
     Serial.print("GUID of this device: "); Serial.println(guid, HEX);
