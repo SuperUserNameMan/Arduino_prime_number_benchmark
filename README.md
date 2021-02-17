@@ -24,4 +24,13 @@ Calculate 10,000 prime numbers :
 - LGT8F328p  @ 32MHz :  59 seconds using Larduino_HSP
   
 - STM32F103  @ 72MHz :   3 seconds using Arduino_Core_STM32 ("Blue Pill" made in China)
- 
+
+| MCU | Clock | Benchmark | SDK |
+|:---:|:---:|:---:|:---:|
+| ATmega328p | 16MHz | 121 s. | |
+| ATmega32u4 | 16MHz | 120 s. | |
+| ATmega328p | 8MHz  | 242 s. | |
+| LGT8F328p  | 16MHz | 118 s. | default Arduino Nano SDK (old bootloader) |
+| LGT8F328p  | 16MHz | 118 s. | Larduino_HSP SDK |
+| LGT8F328p  | 32MHz | 59 s. | Larduino_HSP SDK |
+| STM32F103  | 72MHz | 3 s. | Arduino Core STM32 SDK |
